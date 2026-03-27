@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usulan Sesi Try Out TKA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { background-color: #f0f2f5; font-family: 'Inter', sans-serif; }
+        .form-container { background: white; border-radius: 1.5rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); width: 100%; max-width: 500px; overflow: hidden; }
+        .header-gradient { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
+        .loading-spinner { border: 3px solid #f3f3f3; border-top: 3px solid #3b82f6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="form-container">
+        <!-- HEADER -->
+        <div class="header-gradient p-8 text-white text-center relative">
+            <div class="flex justify-center mb-4">
+                <div class="bg-white/20 p-3 rounded-full backdrop-blur-sm">
+                    <i data-lucide="clipboard-list" class="w-8 h-8"></i>
+                </div>
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight">Usulan Sesi</h1>
+            <p class="text-blue-100 text-sm mt-1 opacity-90 font-medium uppercase tracking-wider">Try Out TKA Kabupaten Cilacap</p>
+        </div>
+
+        <div class="p-8">
+            <!-- Loading Indicator -->
+            <div id="loadingData" class="text-center py-8">
+                <div class="loading-spinner"></div>
+                <span class="text-gray-600 text-sm font-medium">Memuat basis data sekolah...</span>
+            </div>
+
+            <!-- FORM UTAMA -->
+            <form id="usulanForm" class="space-y-5 hidden">
+                <!-- Pilih Komda -->
+                <div>
+                    <label class="flex items-center text-sm font-semibold text-gray-700 mb-1.5">
+                        <i data-lucide="map-pin" class="w-4 h-4 mr-2 text-blue-600"></i>
+                        Pilih Komda
+                    </label>
+                    <select id="komdaSelect" name="komda" required class="block w-full rounded-xl border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-gray-700 transition-all cursor-pointer">
+                        <option value="">-- Pilih Komda --</option>
+                    </select>
+                </div>
+
+                <!-- Nama Sekolah -->
+                <div>
+                    <label class="flex items-center text-sm font-semibold text-gray-700 mb-1.5">
+                        <i data-lucide="school" class="w-4 h-4 mr-2 text-blue-600"></i>
+                        Nama Sekolah
+                    </label>
+                    <select id="sekolahSelect" name="sekolah" required disabled class="block w-full rounded-xl border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-gray-700 transition-all bg-gray-50 disabled:opacity-60">
+                        <option value="">-- Pilih Komda Terlebih Dahulu --</option>
+                    </select>
+                </div>
+
+                <!-- Rencana Pembagian Sesi -->
+                <div>
+                    <label class="flex items-center text-sm font-semibold text-gray-700 mb-1.5">
+                        <i data-lucide="layers" class="w-4 h-4 mr-2 text-blue-600"></i>
+                        Rencana Pembagian Sesi
+                    </label>
+                    <select name="sesi" required class="block w-full rounded-xl border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-gray-700 transition-all cursor-pointer">
+                        <option value="">-- Pilih Jumlah Sesi --</option>
+                        <option value="1 Sesi">1 Sesi</option>
+                        <option value="2 Sesi">2 Sesi</option>
+                        <option value="3 Sesi">3 Sesi</option>
+                        <option value="Lebih dari 3 Sesi">Lebih dari 3 Sesi</option>
+                    </select>
+                </div>
+
+                <!-- Tombol Submit -->
+                <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white font-bold py-3.5 px-4 rounded-xl hover:bg-blue-700 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-blue-200 flex items-center justify-center">
+                    <i data-lucide="send" class="w-4 h-4 mr-2"></i>
+                    Kirim Usulan
+                </button>
+            </form>
+
+            <!-- Pesan Status -->
+            <div id="statusMsg" class="mt-6 p-4 rounded-xl text-center hidden">
+                <p class="text-sm font-semibold"></p>
+            </div>
+        </div>
+        
+        <!-- Footer Form -->
+        <div class="bg-gray-50 p-4 text-center border-t border-gray-100">
+            <p class="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Panitia Try Out TKA Kabupaten Cilacap</p>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // CONFIGURATION
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyzMuH6dlsJFgZySKrVVnoBZDYxtJnOO2CfJpI9QdBEy0UcpdD9rLF7UgQN4t2Hwp8cKQ/exec';
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTyMk_UZA4OOyZ169-dnpv8PnYcP2d6kcQN5n-goNayNYN48ISvrFofTRSw6sKfmcWBkpbpCe0fuAh1/pub?gid=840593539&single=true&output=csv';
+        const TARGET_SHEET = 'UsulanSesi'; 
+
+        let databaseSekolah = [];
+        const form = document.getElementById('usulanForm');
+        const loadingDiv = document.getElementById('loadingData');
+        const komdaSelect = document.getElementById('komdaSelect');
+        const sekolahSelect = document.getElementById('sekolahSelect');
+        const btn = document.getElementById('submitBtn');
+        const statusDiv = document.getElementById('statusMsg');
+        const statusText = statusDiv.querySelector('p');
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch(CSV_URL);
+                const dataText = await response.text();
+                parseCSV(dataText);
+                loadingDiv.classList.add('hidden');
+                form.classList.remove('hidden');
+            } catch (error) {
+                loadingDiv.innerHTML = '<p class="text-red-500 text-sm font-medium">Gagal memuat basis data sekolah.</p>';
+            }
+        });
+
+        function parseCSV(text) {
+            const rows = text.split(/\r?\n/);
+            const listKomda = new Set();
+            for (let i = 1; i < rows.length; i++) {
+                if (!rows[i].trim()) continue;
+                const cols = rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                if (cols.length > 4) {
+                    const sekolah = cols[0].trim().replace(/^"|"$/g, '');
+                    const komda = cols[4].trim().replace(/^"|"$/g, '');
+                    if (komda && sekolah) {
+                        databaseSekolah.push({ komda, sekolah });
+                        listKomda.add(komda);
+                    }
+                }
+            }
+            Array.from(listKomda).sort().forEach(k => {
+                const opt = document.createElement('option');
+                opt.value = k;
+                opt.textContent = k;
+                komdaSelect.appendChild(opt);
+            });
+        }
+
+        komdaSelect.addEventListener('change', function() {
+            const selectedKomda = this.value;
+            sekolahSelect.innerHTML = '<option value="">-- Pilih Sekolah --</option>';
+            if (selectedKomda) {
+                const filtered = databaseSekolah.filter(item => item.komda === selectedKomda);
+                filtered.sort((a, b) => a.sekolah.localeCompare(b.sekolah)).forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item.sekolah;
+                    opt.textContent = item.sekolah;
+                    sekolahSelect.appendChild(opt);
+                });
+                sekolahSelect.disabled = false;
+                sekolahSelect.classList.remove('bg-gray-50');
+            } else {
+                sekolahSelect.disabled = true;
+                sekolahSelect.classList.add('bg-gray-50');
+            }
+        });
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading-spinner !border-white/30 !border-t-white"></div> Mengirim...';
+            btn.classList.add('opacity-50');
+
+            const formData = new FormData(form);
+            const data = {
+                sheetName: TARGET_SHEET,
+                komda: formData.get('komda'),
+                sekolah: formData.get('sekolah'),
+                sesi: formData.get('sesi'),
+                timestamp: new Date().toLocaleString('id-ID')
+            };
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    cache: 'no-cache',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                showStatus('Berhasil! Usulan sesi telah dikirim.', 'bg-green-50 text-green-700 border border-green-200');
+                form.reset();
+                sekolahSelect.disabled = true;
+                sekolahSelect.classList.add('bg-gray-50');
+            } catch (error) {
+                showStatus('Maaf, terjadi kesalahan koneksi.', 'bg-red-50 text-red-700 border border-red-200');
+            }
+        });
+
+        function showStatus(msg, classes) {
+            statusDiv.className = `mt-6 p-4 rounded-xl text-center ${classes}`;
+            statusDiv.classList.remove('hidden');
+            statusText.innerText = msg;
+            btn.disabled = false;
+            btn.innerHTML = '<i data-lucide="send" class="w-4 h-4 mr-2"></i> Kirim Usulan';
+            btn.classList.remove('opacity-50');
+            lucide.createIcons();
+            setTimeout(() => { statusDiv.classList.add('hidden'); }, 6000);
+        }
+    </script>
+</body>
+</html>
